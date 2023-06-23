@@ -1,7 +1,6 @@
 use uv::{
     Result,
-    Loop,
-    RunMode,
+    block_on,
 };
 
 fn main() {
@@ -11,7 +10,8 @@ fn main() {
 }
 
 fn try_main() -> Result<()> {
-    let lp = Loop::try_new()?;
-    lp.run(RunMode::Default)
+    block_on(async {
+        println!("hello async block");
+    })
 }
 

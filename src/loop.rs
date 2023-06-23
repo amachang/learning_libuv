@@ -11,7 +11,9 @@ use std::{
     mem::{
         size_of,
     },
-    ptr::NonNull,
+    ptr::{
+        NonNull,
+    },
 };
 
 use libc::{
@@ -45,11 +47,11 @@ impl Loop {
     pub fn try_new() -> Result<Self> {
         let native = NonNull::new(unsafe { malloc(size_of::<uv_loop_t>()) as *mut _ });
         let Some(native) = native else {
-            return Err(Error::from_io_error(io::Error::last_os_error()));
+            return Err(Error::from(io::Error::last_os_error()));
         };
         let r = unsafe { uv_loop_init(native.as_ptr()) };
         if r != 0 {
-            return Err(Error::from_native(r));
+            return Err(Error::from(r));
         }
         Ok(Self { native })
     }
@@ -57,7 +59,7 @@ impl Loop {
     pub fn run(&self, run_mode: RunMode) -> Result<()> {
         let r = unsafe { uv_run(self.native.as_ptr(), run_mode.to_native()) };
         if r != 0 {
-            return Err(Error::from_native(r));
+            return Err(Error::from(r));
         };
         Ok(())
     }

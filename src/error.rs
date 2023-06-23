@@ -12,6 +12,7 @@ use std::{
         Display,
         Formatter,
     },
+    sync::PoisonError,
 };
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -21,8 +22,15 @@ pub struct Error {
     kind: ErrorKind,
 }
 
-impl Error {
-    pub fn from_native(native: uv_errno_t) -> Self {
+impl From<String> for Error {
+    fn from(message: String) -> Self {
+        let kind = ErrorKind::Message(message);
+        Error { kind }
+    }
+}
+
+impl From<uv_errno_t> for Error {
+    fn from(native: uv_errno_t) -> Self {
         let kind = NativeErrorKind::from_native(native);
         let kind = if let Some(kind) = kind {
             ErrorKind::NativeError(kind)
@@ -34,8 +42,17 @@ impl Error {
         };
         Error { kind }
     }
+}
 
-    pub fn from_io_error(err: io::Error) -> Self {
+impl<T> From<PoisonError<T>> for Error {
+    fn from(err: PoisonError<T>) -> Self {
+        let kind = ErrorKind::Message(err.to_string());
+        Error { kind }
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Self {
         let kind = ErrorKind::IoError(err);
         Error { kind }
     }
@@ -51,6 +68,8 @@ impl Display for Error {
 pub enum ErrorKind {
     NativeError(NativeErrorKind),
     IoError(io::Error),
+    Message(String),
+    LockPoisonedError(String),
 }
 
 impl Display for ErrorKind {
@@ -58,6 +77,8 @@ impl Display for ErrorKind {
         match self {
             Self::NativeError(kind) => write!(f, "Native({})", kind),
             Self::IoError(err) => write!(f, "Io({})", err),
+            Self::Message(message) => write!(f, "Message({})", message),
+            Self::LockPoisonedError(message) => write!(f, "LockPoisoned({})", message),
         }
     }
 }
