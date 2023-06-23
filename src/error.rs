@@ -12,6 +12,7 @@ use std::{
         Display,
         Formatter,
     },
+    num::TryFromIntError,
     sync::PoisonError,
 };
 
@@ -54,6 +55,13 @@ impl<T> From<PoisonError<T>> for Error {
 impl From<io::Error> for Error {
     fn from(err: io::Error) -> Self {
         let kind = ErrorKind::IoError(err);
+        Error { kind }
+    }
+}
+
+impl From<TryFromIntError> for Error {
+    fn from(err: TryFromIntError) -> Self {
+        let kind = ErrorKind::Message(format!("ErrorIntConversion({})", err.to_string()));
         Error { kind }
     }
 }

@@ -11,9 +11,7 @@ use std::{
     mem::{
         size_of,
     },
-    ptr::{
-        NonNull,
-    },
+    ptr::NonNull,
 };
 
 use libc::{
@@ -62,6 +60,10 @@ impl Loop {
             return Err(Error::from(r));
         };
         Ok(())
+    }
+
+    pub fn native_ptr(&self) -> *mut uv_loop_t {
+        self.native.as_ptr()
     }
 }
 
