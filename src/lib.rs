@@ -31,12 +31,12 @@ use futures::task::{
 
 thread_local!(pub static LOOP: RefCell<Option<Loop>> = RefCell::new(None));
 
-pub struct TaskData<T> {
+struct TaskData<T> {
     f: Pin<Box<dyn Future<Output = T> + Send + Sync + 'static>>,
     res: Result<T>,
 }
 
-pub struct Task<T> {
+struct Task<T> {
     data: RwLock<TaskData<T>>
 }
 
@@ -67,7 +67,6 @@ impl<T: Send + Sync> ArcWake for Task<T> {
 }
 
 pub fn block_on<T: Send + Sync>(f: impl Future<Output = T> + Send + Sync + 'static) -> Result<T> {
-
     let already_started = LOOP.with(|lp| !lp.borrow().is_none());
     if already_started {
         return Err(Error::from("Loop already started in this thread.".to_string()));
