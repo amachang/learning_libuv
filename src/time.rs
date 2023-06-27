@@ -104,13 +104,13 @@ impl TryFrom<Duration> for Timer {
 }
 
 impl Future for Timer {
-    type Output = Result<()>;
+    type Output = ();
 
-    fn poll(self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Result<()>> {
-        let mut data = self.data.lock().map_err(Error::from)?;
+    fn poll(self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
+        let mut data = self.data.lock().expect("Timer lock poisoned.");
         assert!(data.is_started);
         if data.is_elapsed {
-            Poll::Ready(Ok(()))
+            Poll::Ready(())
         } else {
             data.waker = Some(ctx.waker().clone());
             Poll::Pending
@@ -124,10 +124,10 @@ impl Drop for Timer {
     }
 }
 
-pub fn sleep(duration: Duration) -> Result<Timer> {
+pub fn sleep(duration: Duration) -> Timer {
     match Instant::now().checked_add(duration) {
-        Some(_) => Timer::try_from(duration),
-        None => Err(Error::from("Overflow time value".to_string())),
+        Some(_) => Timer::try_from(duration).expect("Couldn't create a timer."),
+        None => panic!("Overflow time value"),
     }
 }
 
